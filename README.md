@@ -12,13 +12,18 @@ files. Firebase is loaded lazily from a CDN and only when it is configured.
 
 ## What's in it
 
-- **258 foods**, weighted toward Indian and especially South Indian cooking:
+- **349 foods**, weighted toward Indian and especially South Indian cooking:
   idli, the dosa family, pesarattu, adai, uttapam, appam, idiyappam, puttu,
   Kerala parotta, medu vada, upma, the pongals, bisi bele bath, the rice
   dishes, sambar, rasam, mor and vatha kuzhambu, avial, poriyal, kootu, thoran,
   Chettinad chicken, Malabar fish curry, fish moilee, chicken 65, the chutneys
   and podi — plus the North Indian and pan-Indian staples, dals and flours, and
   a general Western set.
+- **71 vegetables and 47 fruits** listed individually, including the Indian
+  ones: karela, lauki, turai, tindora, parwal, ash gourd, snake gourd, arbi,
+  suran, methi, moringa and amaranth leaves, curry leaves, moong sprouts,
+  cluster beans, drumstick — and amla, jamun, sitaphal, chikoo, mosambi,
+  jackfruit, lychee, guava.
 - **Real serving units** per food — *per idli*, *per dosa*, *cup of sambar*,
   *ladle*, *tbsp of chutney*, *plate of biryani*, *tumbler of filter coffee* —
   alongside grams and ounces.
@@ -44,11 +49,22 @@ python3 -m http.server 8000
 
 Then open http://localhost:8000.
 
-## Setting up Google sign-in
+## Firebase
 
-The deployed site works without this — it just keeps your log in one browser.
-To turn on sign-in and cross-device sync, create a Firebase project and paste
-its config in. It's free and takes about five minutes.
+Already set up. Project **`plate-ledger-7f3a`** — Firestore is provisioned, the
+security rules below are deployed, and the web config is in
+[`firebase-config.js`](./firebase-config.js).
+
+Console: https://console.firebase.google.com/project/plate-ledger-7f3a
+
+Rules are redeployed with:
+
+```bash
+firebase deploy --only firestore:rules
+```
+
+<details>
+<summary>How it was set up, if it ever needs rebuilding</summary>
 
 1. **Create the project.** Go to https://console.firebase.google.com, click
    *Add project*, name it (e.g. `plate-ledger`), and skip Google Analytics.
@@ -81,6 +97,8 @@ its config in. It's free and takes about five minutes.
 
 7. **Commit and push.** GitHub Pages redeploys in about a minute, and the
    *Sign in with Google* button appears.
+
+</details>
 
 ### About committing the Firebase config
 

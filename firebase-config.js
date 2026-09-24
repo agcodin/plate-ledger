@@ -1,23 +1,21 @@
 /**
- * Firebase project settings.
+ * Firebase project settings for Plate Ledger.
  *
- * Replace the placeholder values below with the config object from your own
- * Firebase project (Project settings → General → Your apps → Web app → SDK
- * setup and configuration → Config). See README.md for the full walkthrough.
+ * Project: plate-ledger-7f3a  ·  console.firebase.google.com/project/plate-ledger-7f3a
  *
- * These values are NOT secrets. A Firebase web config identifies your project
- * to Google's servers and is visible to anyone who loads the page — that is by
- * design. What protects your data is the Firestore security rules in
- * firestore.rules, which only let a signed-in user touch their own documents.
+ * These values are NOT secrets. A Firebase web config identifies the project to
+ * Google's servers and is visible to anyone who loads the page — that is by
+ * design. What protects the data is firestore.rules, which only lets a
+ * signed-in user read or write documents under their own uid.
  *
- * Until you fill this in, the app still works: it keeps your log in this
+ * If this is ever blanked out, the app falls back to keeping the log in this
  * browser's local storage and hides the sign-in button.
  */
 export const firebaseConfig = {
-  apiKey: "PASTE_YOUR_API_KEY",
-  authDomain: "PASTE_YOUR_PROJECT.firebaseapp.com",
-  projectId: "PASTE_YOUR_PROJECT_ID",
-  storageBucket: "PASTE_YOUR_PROJECT.appspot.com",
-  messagingSenderId: "PASTE_YOUR_SENDER_ID",
-  appId: "PASTE_YOUR_APP_ID",
+  apiKey: "AIzaSyDCVjvD57aH5AKtaO49QRuCB3wpvzq7tss",
+  authDomain: "plate-ledger-7f3a.firebaseapp.com",
+  projectId: "plate-ledger-7f3a",
+  storageBucket: "plate-ledger-7f3a.firebasestorage.app",
+  messagingSenderId: "692270642036",
+  appId: "1:692270642036:web:da1ceb2b0440580c9ff221",
 };
