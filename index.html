@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Plate Ledger</title>
+<meta name="description" content="Log what you ate — including Indian and South Indian dishes — and see calories, protein, carbs, fat and fiber against your maintenance calories.">
+<meta name="color-scheme" content="light dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="./styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13' fill='none' stroke='%232F6B4B' stroke-width='3'/><circle cx='16' cy='16' r='5' fill='%232F6B4B'/></svg>">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="brand">
+      <b>Plate Ledger</b>
+      <span class="eyebrow" id="todayLabel"></span>
+    </div>
+
+    <button class="gbtn" id="signinBtn" hidden>
+      <svg viewBox="0 0 18 18" width="16" height="16" aria-hidden="true">
+        <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/>
+        <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"/>
+        <path fill="#FBBC05" d="M3.97 10.72a5.4 5.4 0 0 1 0-3.44V4.96H.96a9 9 0 0 0 0 8.08l3.01-2.32z"/>
+        <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.59C13.46.9 11.43 0 9 0A9 9 0 0 0 .96 4.96l3.01 2.32C4.68 5.16 6.66 3.58 9 3.58z"/>
+      </svg>
+      <span>Sign in with Google</span>
+    </button>
+
+    <div class="acct" id="account" hidden>
+      <img id="acctAvatar" alt="" referrerpolicy="no-referrer">
+      <span class="who"><b id="acctName"></b><span id="acctState" class="synced"></span></span>
+      <button class="linky" id="signoutBtn">Sign out</button>
+    </div>
+
+    <div class="maint">
+      <label for="maintenance">Maintenance<br>calories</label>
+      <div class="maint-field">
+        <input id="maintenance" type="number" min="800" max="6000" step="10" inputmode="numeric" value="2400">
+        <span>kcal/day</span>
+      </div>
+    </div>
+
+    <button class="icon-btn" id="themeBtn" aria-label="Switch between light and dark">
+      <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <circle cx="12" cy="12" r="4.2"/>
+        <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.2 5.2l1.4 1.4M17.4 17.4l1.4 1.4M18.8 5.2l-1.4 1.4M6.6 17.4l-1.4 1.4"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="banner" id="setupNotice" hidden>
+    <span class="tag">Local only</span>
+    <span>Google sign-in isn’t configured yet, so your log lives in this browser. Add your Firebase settings to <code>firebase-config.js</code> — see the README — to sync it to your account.</span>
+  </div>
+
+  <div class="banner alert" id="noticeBar" hidden>
+    <span class="tag">Heads up</span>
+    <span id="noticeText"></span>
+    <button class="linky" id="noticeClose">Dismiss</button>
+  </div>
+
+  <div class="banner" id="importBar" hidden>
+    <span class="tag">Found local data</span>
+    <span id="importText"></span>
+    <button class="linky strong" id="importYes">Add to my account</button>
+    <button class="linky" id="importNo">Keep them local</button>
+  </div>
+
+  <div class="banner" id="demoBanner" hidden>
+    <span class="tag">Sample data</span>
+    <span>These meals are an example week. Log anything below and the sample clears.</span>
+  </div>
+
+  <div class="cols">
+    <!-- left column -->
+    <div class="stack">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Log a food</h2>
+          <div class="spacer"></div>
+          <div class="date-field">
+            <label for="entryDate">Date</label>
+            <input id="entryDate" type="date">
+          </div>
+        </div>
+
+        <div class="composer">
+          <div class="field row-food">
+            <label for="foodName">What did you eat</label>
+            <input class="ctl" id="foodName" type="text" autocomplete="off" spellcheck="false"
+                   placeholder="idli, masala dosa, sambar, chicken biryani, oatmeal…"
+                   role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="suggList">
+            <div class="sugg" id="suggBox" hidden><ul id="suggList" role="listbox"></ul></div>
+          </div>
+
+          <div class="row-qty">
+            <div class="field">
+              <label for="amount">How much</label>
+              <input class="ctl num" id="amount" type="number" min="0" step="any" inputmode="decimal" value="1">
+            </div>
+            <div class="field">
+              <label for="unit">Unit</label>
+              <div class="select-wrap"><select class="ctl" id="unit"></select></div>
+            </div>
+            <button class="add" id="addBtn" disabled>Add</button>
+          </div>
+
+          <div class="preview" id="preview"></div>
+
+          <div class="custom-form" id="customForm" hidden>
+            <p class="cf-head">New food — values per 100 g</p>
+            <div class="cf-grid">
+              <div class="field"><label for="cfName">Name</label><input class="ctl" id="cfName" type="text"></div>
+              <div class="field"><label for="cfKcal">kcal</label><input class="ctl num" id="cfKcal" type="number" min="0" step="any" inputmode="decimal"></div>
+              <div class="field"><label for="cfProtein">Protein g</label><input class="ctl num" id="cfProtein" type="number" min="0" step="any" inputmode="decimal"></div>
+              <div class="field"><label for="cfCarbs">Carbs g</label><input class="ctl num" id="cfCarbs" type="number" min="0" step="any" inputmode="decimal"></div>
+              <div class="field"><label for="cfFat">Fat g</label><input class="ctl num" id="cfFat" type="number" min="0" step="any" inputmode="decimal"></div>
+              <div class="field"><label for="cfFiber">Fiber g</label><input class="ctl num" id="cfFiber" type="number" min="0" step="any" inputmode="decimal"></div>
+              <div class="field"><label for="cfServeLabel">Serving name</label><input class="ctl" id="cfServeLabel" type="text" placeholder="bowl, piece, cup"></div>
+              <div class="field"><label for="cfServeGrams">Serving g</label><input class="ctl num" id="cfServeGrams" type="number" min="0" step="any" inputmode="decimal"></div>
+            </div>
+            <div class="cf-actions">
+              <button class="add" id="cfSave">Save food</button>
+              <button class="linky" id="cfCancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2 id="dayTitle">Today</h2>
+          <div class="spacer"></div>
+          <span class="eyebrow" id="dayCount"></span>
+        </div>
+        <ul class="entries" id="entryList"></ul>
+      </section>
+    </div>
+
+    <!-- right column -->
+    <div class="stack">
+      <section class="panel">
+        <div class="panel-head tight">
+          <span class="eyebrow">Amount consumed · <span id="labelDate"></span></span>
+        </div>
+        <div class="label-cal">
+          <span>Calories</span>
+          <b class="num" id="calTotal">0</b>
+        </div>
+        <div class="rule-heavy"></div>
+
+        <div class="macro-row">
+          <span class="nm">Protein</span><span class="val" id="pVal">0 g</span>
+          <span class="sub"><span class="meter"><i id="pMeter" style="background:var(--protein)"></i></span><span class="pct" id="pPct"></span></span>
+        </div>
+        <div class="macro-row">
+          <span class="nm">Carbohydrate</span><span class="val" id="cVal">0 g</span>
+          <span class="sub"><span class="meter"><i id="cMeter" style="background:var(--carbs)"></i></span><span class="pct" id="cPct"></span></span>
+        </div>
+        <div class="macro-row">
+          <span class="nm">Fat</span><span class="val" id="xVal">0 g</span>
+          <span class="sub"><span class="meter"><i id="xMeter" style="background:var(--fat)"></i></span><span class="pct" id="xPct"></span></span>
+        </div>
+        <div class="macro-row">
+          <span class="nm">Dietary fiber</span><span class="val" id="fVal">0 g</span>
+          <span class="sub"><span class="meter"><i id="fMeter" style="background:var(--fiber)"></i></span><span class="pct" id="fPct"></span></span>
+        </div>
+        <p class="foot tight">Protein and carbohydrate meters show share of the day’s calories at 4 kcal/g, fat at 9 kcal/g. Fiber is measured against the 28 g Daily Value.</p>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head tight"><span class="eyebrow">Net balance · today</span></div>
+        <div class="balance">
+          <div class="big" id="netBig">—</div>
+          <div class="verdict" id="netVerdict">Set your maintenance calories to see this.</div>
+          <div class="rate" id="netRate"></div>
+        </div>
+        <div class="bal-bar"><i id="balEaten"></i><i id="balRest"></i></div>
+        <div class="bal-legend">
+          <span id="balLeft">eaten 0</span>
+          <span id="balRight">maintenance 2,400</span>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Past 7 days</h2>
+          <div class="spacer"></div>
+          <span class="eyebrow" id="weekAvg"></span>
+        </div>
+        <div class="chart">
+          <div class="plot" id="plot"></div>
+          <div class="xaxis" id="xaxis"></div>
+        </div>
+        <div class="tbl-scroll">
+          <table class="wtable">
+            <thead>
+              <tr><th>Day</th><th>kcal</th><th>P</th><th>C</th><th>Fat</th><th>Fiber</th><th>Net</th></tr>
+            </thead>
+            <tbody id="weekBody"></tbody>
+            <tfoot id="weekFoot"></tfoot>
+          </table>
+        </div>
+        <p class="foot" id="weekNote"></p>
+      </section>
+    </div>
+  </div>
+
+  <p class="foot">
+    <b>How the numbers are built.</b> Every food carries calories, protein, carbohydrate, fat and fiber per 100 g; your amount is converted to grams and scaled. Indian and South Indian dishes are entered as they are normally cooked at home — sambar with its usual tempering, dosa off a greased tawa, curries with their oil — so a restaurant version will run richer. Values are reference figures, close enough to steer a deficit, not a lab assay. Weight-change estimates use the conventional 3,500 kcal per pound of body fat.
+  </p>
+</main>
+
+<script type="module" src="./js/app.js"></script>
+</body>
+</html>

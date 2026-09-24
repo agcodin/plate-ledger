@@ -1,0 +1,133 @@
+# Plate Ledger
+
+A calorie and macro tracker for people who eat Indian food. Log what you ate and
+how much of it, and it works out calories, protein, carbohydrate, fat and fiber;
+set your maintenance calories and it shows the deficit or surplus you're running,
+today and across the past week.
+
+**Live:** https://agcodin.github.io/plate-ledger/
+
+No build step, no framework, no bundler — plain ES modules served as static
+files. Firebase is loaded lazily from a CDN and only when it is configured.
+
+## What's in it
+
+- **258 foods**, weighted toward Indian and especially South Indian cooking:
+  idli, the dosa family, pesarattu, adai, uttapam, appam, idiyappam, puttu,
+  Kerala parotta, medu vada, upma, the pongals, bisi bele bath, the rice
+  dishes, sambar, rasam, mor and vatha kuzhambu, avial, poriyal, kootu, thoran,
+  Chettinad chicken, Malabar fish curry, fish moilee, chicken 65, the chutneys
+  and podi — plus the North Indian and pan-Indian staples, dals and flours, and
+  a general Western set.
+- **Real serving units** per food — *per idli*, *per dosa*, *cup of sambar*,
+  *ladle*, *tbsp of chutney*, *plate of biryani*, *tumbler of filter coffee* —
+  alongside grams and ounces.
+- **Nutrition-label day panel** with macro shares of the day's calories
+  (4 kcal/g for protein and carbs, 9 kcal/g for fat) and fiber against the
+  28 g Daily Value.
+- **Net balance** against your maintenance calories, converted to lb/week at
+  the conventional 3,500 kcal per pound.
+- **Past 7 days** — bar chart with a maintenance line, and a table of
+  kcal / protein / carbs / fat / fiber / net per day with a weekly total.
+- **Custom foods** — add anything the table is missing by its per-100 g values.
+- **Google sign-in** — your log syncs to your account and follows you across
+  devices. Signed out, everything still works and stays in this browser.
+
+## Running it locally
+
+ES modules need a real server; opening `index.html` from the filesystem won't
+work. Anything static will do:
+
+```bash
+python3 -m http.server 8000
+```
+
+Then open http://localhost:8000.
+
+## Setting up Google sign-in
+
+The deployed site works without this — it just keeps your log in one browser.
+To turn on sign-in and cross-device sync, create a Firebase project and paste
+its config in. It's free and takes about five minutes.
+
+1. **Create the project.** Go to https://console.firebase.google.com, click
+   *Add project*, name it (e.g. `plate-ledger`), and skip Google Analytics.
+
+2. **Turn on Google sign-in.** In the left sidebar: *Build → Authentication →
+   Get started → Sign-in method → Google → Enable*. Pick a support email and
+   save.
+
+3. **Authorise the site's domain.** Still in Authentication, go to *Settings →
+   Authorized domains → Add domain* and add `agcodin.github.io`. Without this
+   the sign-in popup opens and immediately fails with
+   `auth/unauthorized-domain`. (`localhost` is already authorised, so local
+   development works out of the box.)
+
+4. **Create the database.** *Build → Firestore Database → Create database*.
+   Choose a region near you and start in **production mode** — the rules in
+   step 5 replace the defaults.
+
+5. **Publish the security rules.** Open the *Rules* tab and replace what's
+   there with the contents of [`firestore.rules`](./firestore.rules), then
+   *Publish*. These rules are what actually protect your data: they allow reads
+   and writes only under `users/{your uid}`, so nobody can read anyone else's
+   log.
+
+6. **Register a web app and copy the config.** *Project settings* (the gear
+   icon) *→ General →* scroll to *Your apps →* click the web icon `</>` →
+   give it a nickname → *Register app*. Firebase shows a `firebaseConfig`
+   object. Copy its values into [`firebase-config.js`](./firebase-config.js),
+   replacing the `PASTE_...` placeholders.
+
+7. **Commit and push.** GitHub Pages redeploys in about a minute, and the
+   *Sign in with Google* button appears.
+
+### About committing the Firebase config
+
+Firebase web config values are **not secrets** — they identify your project to
+Google and are visible to anyone who loads any Firebase web app. Google
+documents them as public. Your data is protected by the Firestore rules in step
+5, not by hiding the API key. If you want to narrow it further, add an HTTP
+referrer restriction to the browser key in Google Cloud console → APIs &
+Services → Credentials.
+
+## How data is stored
+
+| Signed in | Where |
+| --- | --- |
+| No | `localStorage` in this browser |
+| Yes | Firestore, under `users/{uid}` |
+
+```
+users/{uid}/entries/{entryId}     one logged food
+users/{uid}/customFoods/{slug}    foods you added yourself
+users/{uid}/meta/settings         { maintenance: number }
+```
+
+Sign in while you have entries logged locally and the app offers to copy them
+into your account rather than doing it silently. Entries are read back 400 days
+at a time; anything older stays stored but isn't fetched on load.
+
+## Files
+
+```
+index.html          markup
+styles.css          all styling, light and dark themes as CSS tokens
+firebase-config.js  the one file you edit — your project's settings
+firestore.rules     security rules to paste into the Firebase console
+js/foods.js         the nutrition table and the search ranking
+js/firebase.js      lazy SDK load, Google sign-in, auth state
+js/store.js         LocalBackend and CloudBackend behind one interface
+js/app.js           state, rendering, event wiring
+```
+
+## A note on the numbers
+
+Indian and South Indian dishes are entered as they are normally cooked at home —
+sambar with its usual tempering, dosa off a greased tawa, curries with their
+oil — so a restaurant version will run richer. These are reference figures,
+close enough to steer a deficit, not a lab assay. Weight-change estimates use
+the conventional 3,500 kcal per pound of body fat, which is a rule of thumb, not
+a law of physics.
+
+Not medical advice.
