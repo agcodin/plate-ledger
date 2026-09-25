@@ -135,7 +135,7 @@ at a time; anything older stays stored but isn't fetched on load.
 
 ```
 index.html          markup
-styles.css          all styling, light and dark themes as CSS tokens
+styles.css          all styling — the Filter Coffee theme, light and dark, as CSS tokens
 firebase-config.js  the one file you edit — your project's settings
 firestore.rules     security rules to paste into the Firebase console
 js/foods.js         the nutrition table and the search ranking
@@ -173,6 +173,19 @@ Google Cloud console → APIs & Services → Credentials:
 
 Use a key dedicated to this app rather than one shared with another project — a
 shared key means one leak burns both.
+
+## Theme
+
+**Filter Coffee** — davara and tumbler. Milky beige ground, chicory brown ink,
+a brass hairline where a border would otherwise go, and stainless grey for the
+week's bars. *Source Serif 4* carries the name and the two figures the page is
+actually about; *Familjen Grotesk* the body, *IBM Plex Mono* the data. Dark mode
+is dark roast rather than an inversion.
+
+Everything is driven by tokens on `:root` in `styles.css`, redefined once under
+`prefers-color-scheme: dark` and again under `[data-theme="dark"]` so the
+in-page toggle wins in both directions. Reskinning means editing those three
+blocks — no markup or logic changes.
 
 ## A note on the numbers
 
