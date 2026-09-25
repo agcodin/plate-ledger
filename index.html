@@ -34,6 +34,7 @@
     <div class="acct" id="account" hidden>
       <img id="acctAvatar" alt="" referrerpolicy="no-referrer">
       <span class="who"><b id="acctName"></b><span id="acctState" class="synced"></span></span>
+      <button class="linky" id="keyBtn">AI key</button>
       <button class="linky" id="signoutBtn">Sign out</button>
     </div>
 
@@ -115,8 +116,20 @@
 
           <div class="preview" id="preview"></div>
 
+          <div class="custom-form" id="keyForm" hidden>
+            <p class="cf-head">Gemini API key</p>
+            <p class="cf-note">Stored in your own account, never in the site's code. Paste a key from <b>aistudio.google.com/apikey</b> — ideally a fresh one restricted to the Generative Language API and the referrer <code>agcodin.github.io/*</code>.</p>
+            <div class="key-row">
+              <input class="ctl" id="apiKeyInput" type="password" autocomplete="off" spellcheck="false" placeholder="AIza…" aria-label="Gemini API key">
+              <button class="add" id="keySave">Save key</button>
+              <button class="linky" id="keyCancel">Cancel</button>
+            </div>
+            <p class="cf-note" id="keyStatus"></p>
+          </div>
+
           <div class="custom-form" id="customForm" hidden>
-            <p class="cf-head">New food — values per 100 g</p>
+            <p class="cf-head" id="cfHead">New food — values per 100 g</p>
+            <p class="cf-note" id="cfNote" hidden></p>
             <div class="cf-grid">
               <div class="field"><label for="cfName">Name</label><input class="ctl" id="cfName" type="text"></div>
               <div class="field"><label for="cfKcal">kcal</label><input class="ctl num" id="cfKcal" type="number" min="0" step="any" inputmode="decimal"></div>

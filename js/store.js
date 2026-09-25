@@ -82,8 +82,12 @@ export class LocalBackend {
   }
 
   async setMaintenance(kcal) {
+    await this.setSetting("maintenance", kcal);
+  }
+
+  async setSetting(field, value) {
     const settings = ls.read(KEYS.settings, {});
-    settings.maintenance = kcal;
+    settings[field] = value;
     ls.write(KEYS.settings, settings);
     this.#emit();
   }
@@ -199,7 +203,11 @@ export class CloudBackend {
   }
 
   async setMaintenance(kcal) {
-    await this.fs.setDoc(this.settingsDoc, { maintenance: kcal }, { merge: true });
+    await this.setSetting("maintenance", kcal);
+  }
+
+  async setSetting(field, value) {
+    await this.fs.setDoc(this.settingsDoc, { [field]: value }, { merge: true });
   }
 
   async addCustomFood(food) {

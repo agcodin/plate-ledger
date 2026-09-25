@@ -8,6 +8,7 @@
 import { BUILT_IN, mkFood, unitsFor, searchFoods } from "./foods.js";
 import { LocalBackend, CloudBackend, ls } from "./store.js";
 import { isConfigured, loadFirebase, watchUser, signIn, signOutNow } from "./firebase.js";
+import { lookupFood, GeminiError } from "./gemini.js";
 
 /* ===================== small helpers ===================== */
 
@@ -41,6 +42,7 @@ const state = {
   entries: [],
   customFoods: [],
   maintenance: 2400,
+  apiKey: "",
   viewDate: todayKey(),
   demo: false,
   user: null,
@@ -129,6 +131,8 @@ function applySnapshot(snap) {
     state.maintenance = snap.settings.maintenance;
     if (document.activeElement !== $("maintenance")) $("maintenance").value = state.maintenance;
   }
+  state.apiKey = typeof snap.settings?.geminiKey === "string" ? snap.settings.geminiKey : "";
+  renderKeyStatus();
   renderAll();
 }
 
@@ -416,12 +420,19 @@ function renderPreview() {
     box.append(hint);
 
     if (noMatch) {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "ask";
-      btn.textContent = `Add “${typed}” as a custom food`;
-      btn.addEventListener("click", () => openCustomForm(typed));
-      box.append(btn);
+      const ai = document.createElement("button");
+      ai.type = "button";
+      ai.className = "ask primary";
+      ai.textContent = state.apiKey ? `Look up “${typed}” with Gemini` : "Look up with Gemini — add a key";
+      ai.addEventListener("click", () => askGemini(typed, ai));
+      box.append(ai);
+
+      const manual = document.createElement("button");
+      manual.type = "button";
+      manual.className = "ask";
+      manual.textContent = "Enter it manually";
+      manual.addEventListener("click", () => openCustomForm(typed));
+      box.append(manual);
     }
     return;
   }
@@ -462,9 +473,98 @@ addBtn.addEventListener("click", async () => {
 /* ---------- custom foods ---------- */
 
 function openCustomForm(name) {
+  $("keyForm").hidden = true;
   $("customForm").hidden = false;
+  $("cfHead").textContent = "New food — values per 100 g";
+  $("cfNote").hidden = true;
   $("cfName").value = name;
   $("cfKcal").focus();
+}
+
+/* ---------- Gemini lookup ---------- */
+
+function openKeyForm() {
+  $("customForm").hidden = true;
+  $("keyForm").hidden = false;
+  $("apiKeyInput").value = state.apiKey || "";
+  renderKeyStatus();
+  $("apiKeyInput").focus();
+}
+
+function renderKeyStatus() {
+  const el = $("keyStatus");
+  if (!el) return;
+  if (state.apiKey) {
+    const where = backend.mode === "cloud" ? "your account" : "this browser";
+    el.textContent = `A key is saved in ${where}, ending …${state.apiKey.slice(-4)}.`;
+  } else {
+    el.textContent = "No key saved yet.";
+  }
+}
+
+$("keyBtn").addEventListener("click", openKeyForm);
+$("keyCancel").addEventListener("click", () => { $("keyForm").hidden = true; });
+$("keySave").addEventListener("click", async () => {
+  const value = $("apiKeyInput").value.trim();
+  state.apiKey = value;
+  await backend.setSetting("geminiKey", value);
+  renderKeyStatus();
+  $("keyForm").hidden = true;
+  renderPreview();
+});
+
+let geminiAbort = null;
+
+async function askGemini(query, button) {
+  if (!state.apiKey) {
+    openKeyForm();
+    return;
+  }
+  geminiAbort?.abort();
+  geminiAbort = new AbortController();
+
+  button.disabled = true;
+  button.classList.add("busy");
+  button.textContent = "Asking Gemini…";
+
+  try {
+    const r = await lookupFood(query, state.apiKey, { signal: geminiAbort.signal });
+    const serves = r.servingGrams > 0 && r.servingLabel ? [[r.servingLabel, r.servingGrams]] : [];
+    const food = mkFood([r.name, r.kcal, r.protein, r.carbs, r.fiber, r.fat, serves], true);
+
+    await backend.addCustomFood({
+      name: food.name, k: food.k, p: food.p, c: food.c, f: food.f, x: food.x, s: food.s,
+    });
+    foods = foods.filter((f) => f.name !== food.name).concat([food]);
+
+    // Show the filled values so the estimate can be checked or corrected.
+    openCustomForm(food.name);
+    $("cfKcal").value = food.k;
+    $("cfProtein").value = food.p;
+    $("cfCarbs").value = food.c;
+    $("cfFat").value = food.x;
+    $("cfFiber").value = food.f;
+    $("cfServeLabel").value = r.servingLabel;
+    $("cfServeGrams").value = r.servingGrams || "";
+    $("cfHead").textContent = "Estimated by Gemini — values per 100 g";
+    $("cfNote").hidden = false;
+    $("cfNote").textContent = r.mismatch
+      ? "Saved, and already selected below. Heads up: the calories don’t match the macros, so check them before you rely on this one."
+      : "Saved, and already selected below. It’s an estimate — correct anything that looks off and save again.";
+
+    pickFood(food);
+  } catch (err) {
+    button.disabled = false;
+    button.classList.remove("busy");
+    const code = err instanceof GeminiError ? err.code : "unknown";
+    if (code === "no_key" || code === "bad_key") {
+      showNotice("gemini", err.message + " Add a working key under “AI key”.");
+      openKeyForm();
+    } else if (code !== "cancelled") {
+      showNotice("gemini", err.message || "Gemini lookup failed.");
+    }
+    button.textContent = `Look up “${query}” with Gemini`;
+  }
 }
 $("cfCancel").addEventListener("click", () => {
   $("customForm").hidden = true;

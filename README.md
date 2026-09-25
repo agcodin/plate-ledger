@@ -34,7 +34,12 @@ files. Firebase is loaded lazily from a CDN and only when it is configured.
   the conventional 3,500 kcal per pound.
 - **Past 7 days** — bar chart with a maintenance line, and a table of
   kcal / protein / carbs / fat / fiber / net per day with a weekly total.
-- **Custom foods** — add anything the table is missing by its per-100 g values.
+- **Gemini lookup** — type something the table doesn't have and it asks Gemini
+  for per-100 g values and a household serving, fills them in, saves the food
+  and selects it. Answers come back under a response schema and are re-checked
+  in the browser (fiber can't exceed carbs, nothing over 100 g or 902 kcal per
+  100 g, calories sanity-checked against the macros) before anything is saved.
+- **Custom foods** — or add anything by hand from its per-100 g values.
 - **Google sign-in** — your log syncs to your account and follows you across
   devices. Signed out, everything still works and stays in this browser.
 
@@ -135,9 +140,39 @@ firebase-config.js  the one file you edit — your project's settings
 firestore.rules     security rules to paste into the Firebase console
 js/foods.js         the nutrition table and the search ranking
 js/firebase.js      lazy SDK load, Google sign-in, auth state
+js/gemini.js        nutrition lookup for foods not in the table
 js/store.js         LocalBackend and CloudBackend behind one interface
 js/app.js           state, rendering, event wiring
 ```
+
+## The Gemini API key
+
+The key is **not in this repo and must never be**. This is a public repo serving
+a static page, so anything committed here is readable by anyone who opens the
+site — and unlike the Firebase web config (public by design, guarded by the
+Firestore rules), a Gemini key is a live billable credential with nothing behind
+it.
+
+Instead the key is entered once in the app, under **AI key** in the header, and
+stored per user:
+
+| Signed in | Where the key lives |
+| --- | --- |
+| Yes | `users/{uid}/meta/settings.geminiKey` — only you can read it, per the rules |
+| No | `localStorage` on that device |
+
+It is sent to Google in an `x-goog-api-key` header rather than a query string,
+so it stays out of URLs and referrer logs.
+
+Get a key at https://aistudio.google.com/apikey. Two things worth doing to it in
+Google Cloud console → APIs & Services → Credentials:
+
+- **Restrict it to the Generative Language API**, so a leak can't touch anything
+  else in the project.
+- **Add an HTTP referrer restriction** for `agcodin.github.io/*`.
+
+Use a key dedicated to this app rather than one shared with another project — a
+shared key means one leak burns both.
 
 ## A note on the numbers
 
